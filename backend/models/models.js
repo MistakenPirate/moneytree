@@ -11,28 +11,41 @@ const userSchema = mongoose.Schema({
     maxLength: 30,
   },
   firstName: {
-     type: String, 
-     required: true,
-     trim: true,
-     maxLength: 50, 
-    },
-  lastName: { 
-    type: String, 
+    type: String,
     required: true,
     trim: true,
-    maxLength: 50, 
+    maxLength: 50,
   },
-  password: { 
-    type: String, 
+  lastName: {
+    type: String,
+    required: true,
+    trim: true,
+    maxLength: 50,
+  },
+  password: {
+    type: String,
     required: true,
     minLength: 6,
   },
-  balance: { 
-    type: Number, 
+  balance: {
+    type: Number,
     default: 0,
   },
 });
 
+const accountSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  balance: {
+    type: Number,
+    required: true,
+  },
+});
+
+const Account = mongoose.model("Account", accountSchema);
 const User = mongoose.model("user", userSchema);
 
 module.exports = { User };
