@@ -15,7 +15,7 @@ router.get("/balance", authMiddleware, async (req, res) => {
   });
 });
 
-router.post("buggytransfer", authMiddleware, async (req, res) => {
+router.post("transferV1", authMiddleware, async (req, res) => {
   const { amount, to } = req.body;
 
   const account = await Account.findOne({
@@ -59,6 +59,44 @@ router.post("buggytransfer", authMiddleware, async (req, res) => {
       },
     }
   );
+
+  res.json({
+    message: "Transfer Successful",
+  });
+});
+
+router.post("/transferV2", authMiddleware, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  const { amount, to } = req.body;
+
+  const account = await Account.findOne({ userId: req.userId }).session(
+    session
+  );
+
+  if (!account || account.balance < amount) {
+    await session.abortTransaction();
+    return res.status(400).json({
+      message: "Insufficient balance",
+    });
+  }
+
+  const toAccount = await Account.findOne({ userId: to }).session(session);
+
+  if (!toAccount) {
+    await session.abortTransaction();
+    return res.status(400).json({
+      message: "Invalid Account",
+    });
+  }
+
+  await Account.updateOne(
+    { userId: req.userId },
+    { $inc: { balance: -amount } }
+  );
+  await Account.updateOne({ userId: to }, { $inc: { balance: amount } });
+
+  await session.commitTransaction();
 
   res.json({
     message: "Transfer Successful",
